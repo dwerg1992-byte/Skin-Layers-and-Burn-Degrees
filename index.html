@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Skin Layers & Burn Degrees</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            padding: 30px;
+            color: #e2e8f0;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 40px 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        h1 {
+            font-size: 3em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f97316, #ef4444, #dc2626);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            letter-spacing: -1px;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .diagram-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .diagram-title {
+            color: #1e293b;
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .instructions {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1e40af;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .instructions p {
+            font-weight: 600;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        
+        .skin-diagram {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+            cursor: pointer;
+            padding-left: 150px;
+        }
+        
+        .skin-layer {
+            position: relative;
+            border: 3px solid #cbd5e1;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .skin-layer:hover {
+            border-color: #f97316;
+            transform: translateX(-5px);
+            box-shadow: 0 8px 24px rgba(249, 115, 22, 0.3);
+        }
+        
+        .skin-layer.active {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+        }
+        
+        .layer-label {
+            position: absolute;
+            left: -140px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1em;
+            white-space: nowrap;
+            text-align: right;
+            width: 120px;
+        }
+        
+        .layer-content {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .layer-name {
+            font-weight: 600;
+            color: #475569;
+        }
+        
+        .click-hint {
+            color: #f97316;
+            font-size: 0.85em;
+            font-weight: 600;
+            opacity: 0.7;
+        }
+        
+        .epidermis {
+            background: linear-gradient(135deg, #fed7aa, #fdba74);
+        }
+        
+        .papillary-dermis {
+            background: linear-gradient(135deg, #fecaca, #fca5a5);
+        }
+        
+        .reticular-dermis {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+        }
+        
+        .hypodermis {
+            background: linear-gradient(135deg, #fef08a, #fde047);
+        }
+        
+        .info-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 40px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        .info-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        
+        .info-empty-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        .layer-detail {
+            animation: fadeIn 0.4s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .layer-detail h2 {
+            color: #f97316;
+            font-size: 2em;
+            font-weight: 800;
+            margin-bottom: 15px;
+            letter-spacing: -0.5px;
+        }
+        
+        .layer-description {
+            color: #cbd5e1;
+            font-size: 1.05em;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border-left: 4px solid #f97316;
+        }
+        
+        .burn-degrees {
+            margin-top: 30px;
+        }
+        
+        .burn-degrees h3 {
+            color: #fbbf24;
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .burn-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .burn-card:hover {
+            border-color: #f97316;
+            transform: translateX(5px);
+            box-shadow: 0 8px 24px rgba(249, 115, 22, 0.2);
+        }
+        
+        .clinical-photo {
+            margin: 20px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .clinical-photo img {
+            width: 100%;
+            height: auto;
+            display: block;
+            max-height: 300px;
+            object-fit: cover;
+        }
+        
+        .photo-caption {
+            padding: 12px;
+            text-align: center;
+            color: #cbd5e1;
+            font-size: 0.9em;
+            font-style: italic;
+            background: rgba(0,0,0,0.2);
+        }
+        
+        .burn-title {
+            color: #fbbf24;
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .degree-badge {
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+        }
+        
+        .characteristics {
+            margin-bottom: 15px;
+        }
+        
+        .characteristics h4 {
+            color: #94a3b8;
+            font-size: 0.9em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .char-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .char-list li {
+            color: #e2e8f0;
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.6;
+        }
+        
+        .char-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #f97316;
+            font-weight: 700;
+        }
+        
+        .treatment-box {
+            background: rgba(34, 197, 94, 0.1);
+            border: 2px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .treatment-box h4 {
+            color: #22c55e;
+            font-size: 0.9em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .treatment-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .treatment-box li {
+            color: #86efac;
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .treatment-box li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #22c55e;
+            font-weight: 700;
+        }
+        
+        .visual-examples {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        .visual-examples h3 {
+            color: #fbbf24;
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .example-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .example-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        .example-image {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #64748b, #475569);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        .example-label {
+            color: #cbd5e1;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        
+        .reset-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .reset-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
+        }
+        
+        .summary-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 40px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        .summary-section h2 {
+            color: #fbbf24;
+            font-size: 1.8em;
+            font-weight: 800;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .comparison-table th {
+            background: rgba(249, 115, 22, 0.2);
+            color: #fbbf24;
+            padding: 15px;
+            text-align: left;
+            font-weight: 700;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        .comparison-table td {
+            padding: 15px;
+            border: 2px solid rgba(255,255,255,0.1);
+            color: #cbd5e1;
+        }
+        
+        .comparison-table tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔥 Interactive Skin Layers & Burn Degrees</h1>
+            <p class="subtitle">Educational Tool for Understanding Burn Depth and Classification</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="diagram-container">
+                <h2 class="diagram-title">Skin Anatomy</h2>
+                <div class="instructions">
+                    <p>👆 Click on any skin layer to learn about its structure and which burn degrees affect it</p>
+                </div>
+                
+                <div class="skin-diagram">
+                    <div class="skin-layer epidermis" data-layer="epidermis">
+                        <div class="layer-label">EPIDERMIS</div>
+                        <div class="layer-content">
+                            <span class="layer-name">Outermost protective layer</span>
+                            <span class="click-hint">Click to explore →</span>
+                        </div>
+                    </div>
+                    
+                    <div class="skin-layer papillary-dermis" data-layer="papillary">
+                        <div class="layer-label">PAPILLARY<br>DERMIS</div>
+                        <div class="layer-content">
+                            <span class="layer-name">Capillary vessels & nerve fibers</span>
+                            <span class="click-hint">Click to explore →</span>
+                        </div>
+                    </div>
+                    
+                    <div class="skin-layer reticular-dermis" data-layer="reticular">
+                        <div class="layer-label">RETICULAR<br>DERMIS</div>
+                        <div class="layer-content">
+                            <span class="layer-name">Blood vessels, nerves & hair follicles</span>
+                            <span class="click-hint">Click to explore →</span>
+                        </div>
+                    </div>
+                    
+                    <div class="skin-layer hypodermis" data-layer="hypodermis">
+                        <div class="layer-label">HYPODERMIS</div>
+                        <div class="layer-content">
+                            <span class="layer-name">Subcutaneous tissue & fat</span>
+                            <span class="click-hint">Click to explore →</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-panel" id="infoPanel">
+                <div class="info-empty">
+                    <div class="info-empty-icon">👈</div>
+                    <p style="font-size: 1.2em; font-weight: 600;">Select a skin layer to view detailed information</p>
+                    <p style="margin-top: 10px; color: #64748b;">Learn about burn degrees, characteristics, and treatment options</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="summary-section">
+            <h2>📊 Quick Reference: Burn Degree Comparison</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Burn Degree</th>
+                        <th>Layers Affected</th>
+                        <th>Appearance</th>
+                        <th>Pain Level</th>
+                        <th>Healing Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1st Degree</strong></td>
+                        <td>Epidermis only</td>
+                        <td>Red, blanchable, intact skin</td>
+                        <td>Painful</td>
+                        <td>3-7 days</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2nd Degree (Partial)</strong></td>
+                        <td>Epidermis + Papillary dermis</td>
+                        <td>Blistering, moist, red</td>
+                        <td>Very painful</td>
+                        <td>1-3 weeks</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2nd Degree (Deep)</strong></td>
+                        <td>Epidermis + Reticular dermis</td>
+                        <td>Pale, dry, open areas</td>
+                        <td>Painful</td>
+                        <td>3-8 weeks</td>
+                    </tr>
+                    <tr>
+                        <td><strong>3rd Degree</strong></td>
+                        <td>All layers + subcutaneous tissue</td>
+                        <td>White/black/charred, leathery</td>
+                        <td>Painless (nerve damage)</td>
+                        <td>Requires surgery</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const layerData = {
+            epidermis: {
+                name: "Epidermis",
+                description: "The epidermis is the outermost layer of skin, providing a waterproof barrier and creating our skin tone. It contains no blood vessels and is constantly regenerating. This layer provides the first line of defense against external environmental threats.",
+                burns: [
+                    {
+                        degree: "1st Degree (Superficial)",
+                        badge: "1°",
+                        photoUrl: "https://i.imgur.com/YOURIMAGE1.jpg", // Replace with your 1st degree burn image URL
+                        characteristics: [
+                            "Affects only the epidermis",
+                            "Skin remains intact",
+                            "Red and blanchable (turns white with pressure)",
+                            "Painful and sensitive to touch",
+                            "No blistering"
+                        ],
+                        treatment: [
+                            "At-home treatment usually suffices",
+                            "Cool compresses",
+                            "Over-the-counter pain relief",
+                            "Moisturizing lotions",
+                            "Heals within 3-7 days without scarring"
+                        ],
+                        examples: ["☀️ Sunburn", "💧 Minor scalds"]
+                    }
+                ]
+            },
+            papillary: {
+                name: "Papillary Dermis",
+                description: "The papillary dermis is the upper layer of the dermis, directly beneath the epidermis. It contains a rich network of capillary vessels and nerve fibers that provide sensation and nourishment to the skin. This layer is crucial for wound healing and sensation.",
+                burns: [
+                    {
+                        degree: "2nd Degree - Partial Thickness",
+                        badge: "2° PT",
+                        photoUrl: "https://i.imgur.com/YOURIMAGE2.jpg", // Replace with your partial thickness burn image URL
+                        characteristics: [
+                            "Affects epidermis and papillary dermis",
+                            "Blanchable (capillaries still intact)",
+                            "Very painful due to exposed nerve endings",
+                            "Blistering of skin",
+                            "Moist, weeping appearance",
+                            "Surrounding inflammation and redness"
+                        ],
+                        treatment: [
+                            "Specialized burn dressings",
+                            "Pain management",
+                            "Infection prevention",
+                            "May require hospital admission depending on size and location",
+                            "Heals in 1-3 weeks",
+                            "Usually minimal scarring with proper care"
+                        ],
+                        examples: ["🔥 Flame contact", "💧 Hot liquid splash", "⚡ Brief chemical exposure"]
+                    }
+                ]
+            },
+            reticular: {
+                name: "Reticular Dermis",
+                description: "The reticular dermis is the deeper, thicker layer of the dermis containing blood vessels, nerve endings, hair follicles, and sweat glands. It provides strength and elasticity to the skin through collagen and elastin fibers. Damage to this layer significantly impacts healing and can lead to scarring.",
+                burns: [
+                    {
+                        degree: "2nd Degree - Deep Partial Thickness",
+                        badge: "2° DPT",
+                        photoUrl: "https://i.imgur.com/YOURIMAGE3.jpg", // Replace with your deep partial thickness burn image URL
+                        characteristics: [
+                            "Affects epidermis and reticular dermis",
+                            "Painful but less than superficial partial thickness",
+                            "Open, exposed areas",
+                            "Pale or mottled appearance",
+                            "NOT blanchable (deeper capillary damage)",
+                            "Dry or waxy texture"
+                        ],
+                        treatment: [
+                            "Specialized burn dressings and debridement",
+                            "May require skin graft surgery to aid healing",
+                            "Usually requires hospital admission",
+                            "Extended healing time (3-8 weeks)",
+                            "Higher risk of hypertrophic scarring",
+                            "May need physical therapy to prevent contractures"
+                        ],
+                        examples: ["🔥 Prolonged flame exposure", "🔌 Electrical burns", "⚗️ Chemical burns"]
+                    }
+                ]
+            },
+            hypodermis: {
+                name: "Hypodermis (Subcutaneous Tissue)",
+                description: "The hypodermis is the deepest layer of skin, consisting of fat cells, connective tissue, larger blood vessels, and nerves. It provides insulation, cushioning, and energy storage. When burns extend to this layer, they are classified as full-thickness and require surgical intervention.",
+                burns: [
+                    {
+                        degree: "3rd Degree (Full Thickness)",
+                        badge: "3°",
+                        photoUrl: "https://i.imgur.com/YOURIMAGE4.jpg", // Replace with your full thickness burn image URL
+                        characteristics: [
+                            "Destroys all skin layers including subcutaneous tissue",
+                            "May extend to muscle and bone in severe cases",
+                            "Painless due to complete nerve destruction",
+                            "NOT blanchable",
+                            "Appears white, black, brown, or charred",
+                            "Leathery, hard texture (eschar formation)",
+                            "No blistering (all skin layers destroyed)"
+                        ],
+                        treatment: [
+                            "REQUIRES surgical intervention",
+                            "Surgical debridement of dead tissue",
+                            "Skin grafting essential for closure",
+                            "Possible amputation in extreme cases",
+                            "Specialized burn dressings",
+                            "Requires hospital admission to burn center",
+                            "Long-term rehabilitation and physical therapy",
+                            "High risk of infection and complications"
+                        ],
+                        examples: ["🔥 Prolonged fire exposure", "⚡ High-voltage electrical injury", "⚗️ Extended chemical contact", "💥 Explosion burns"]
+                    }
+                ]
+            }
+        };
+
+        const layers = document.querySelectorAll('.skin-layer');
+        const infoPanel = document.getElementById('infoPanel');
+
+        layers.forEach(layer => {
+            layer.addEventListener('click', () => {
+                // Remove active class from all layers
+                layers.forEach(l => l.classList.remove('active'));
+                
+                // Add active class to clicked layer
+                layer.classList.add('active');
+                
+                // Get layer data
+                const layerKey = layer.getAttribute('data-layer');
+                const data = layerData[layerKey];
+                
+                // Update info panel
+                displayLayerInfo(data);
+            });
+        });
+
+        function displayLayerInfo(data) {
+            let burnsHTML = '';
+            
+            data.burns.forEach(burn => {
+                const examplesHTML = burn.examples.map(ex => `
+                    <div class="example-card">
+                        <div class="example-image">${ex.split(' ')[0]}</div>
+                        <div class="example-label">${ex.split(' ').slice(1).join(' ')}</div>
+                    </div>
+                `).join('');
+                
+                burnsHTML += `
+                    <div class="burn-card">
+                        <div class="burn-title">
+                            <span class="degree-badge">${burn.badge}</span>
+                            ${burn.degree}
+                        </div>
+                        
+                        ${burn.photoUrl ? `
+                        <div class="clinical-photo">
+                            <img src="${burn.photoUrl}" alt="${burn.degree} burn example" />
+                            <p class="photo-caption">Clinical example of ${burn.degree}</p>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="characteristics">
+                            <h4>Characteristics:</h4>
+                            <ul class="char-list">
+                                ${burn.characteristics.map(char => `<li>${char}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="treatment-box">
+                            <h4>Treatment:</h4>
+                            <ul>
+                                ${burn.treatment.map(treatment => `<li>${treatment}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            infoPanel.innerHTML = `
+                <div class="layer-detail">
+                    <h2>${data.name}</h2>
+                    <div class="layer-description">
+                        ${data.description}
+                    </div>
+                    <div class="burn-degrees">
+                        <h3>🔥 Burn Degrees Affecting This Layer</h3>
+                        ${burnsHTML}
+                    </div>
+                    <button class="reset-button" onclick="resetView()">← Back to Layer Selection</button>
+                </div>
+            `;
+        }
+
+        function resetView() {
+            layers.forEach(l => l.classList.remove('active'));
+            infoPanel.innerHTML = `
+                <div class="info-empty">
+                    <div class="info-empty-icon">👈</div>
+                    <p style="font-size: 1.2em; font-weight: 600;">Select a skin layer to view detailed information</p>
+                    <p style="margin-top: 10px; color: #64748b;">Learn about burn degrees, characteristics, and treatment options</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
